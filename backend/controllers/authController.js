@@ -84,8 +84,7 @@ const signup = async (req, res) => {
     });
 
     const token = generateToken(user._id, user.role);
-
-    return res.status(201).json({ success: true, data: { token } });
+    return res.status(201).json({ success: true, token, role: user.role, userId: user._id });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
   }
@@ -156,8 +155,7 @@ const login = async (req, res) => {
     }
 
     const token = generateToken(user._id, user.role);
-
-    return res.status(200).json({ success: true, data: { token } });
+    return res.status(200).json({ success: true, token, role: user.role, userId: user._id });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
   }

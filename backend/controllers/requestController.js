@@ -125,7 +125,7 @@ const getRequests = async (req, res) => {
       return res.status(403).json({ success: false, message: "Access denied: insufficient role" });
     }
 
-    const requests = await AcceptRequest.find({ taskId }).populate("freelancerId", "name phone");
+    const requests = await AcceptRequest.find({ taskId }).populate("freelancerId", "name phone skills");
 
     const data = requests.map((r) => ({
       _id: r._id,
@@ -133,11 +133,7 @@ const getRequests = async (req, res) => {
       topUpAmount: r.topUpAmount,
       basePrice: task.basePrice,
       totalPrice: task.basePrice + r.topUpAmount,
-      freelancer: {
-        _id: r.freelancerId._id,
-        name: r.freelancerId.name,
-        phone: r.freelancerId.phone,
-      },
+      freelancerId: r.freelancerId,
       createdAt: r.createdAt,
     }));
 
@@ -284,4 +280,52 @@ const rejectRequest = async (req, res) => {
   }
 };
 
-module.exports = { sendRequest, getRequests, acceptRequest, rejectRequest };
+const getMyRequest = async (req, res) => {
+  try {
+    if (req.user.role !== "freelancer") {
+      return res.status(403).json({ success: false, message: "Access denied: insufficient role" });
+    }
+
+    const { taskId } = req.params;
+    const request = await AcceptRequest.findOne({ taskId, freelancerId: req.user.userId });
+
+    return res.status(200).json({ success: true, data: request });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+const getFreelancerRequests = async (req, res) => {
+  try {
+    if (req.user.role !== "freelancer") {
+      return res.status(403).json({ success: false, message: "Access denied: insufficient role" });
+    }
+
+    const requests = await AcceptRequest.find({ freelancerId: req.user.userId }).populate("taskId");
+
+    return res.status(200).json({ success: true, data: requests });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+const getCustomerReceivedRequests = async (req, res) => {
+  try {
+    if (req.user.role !== "customer") {
+      return res.status(403).json({ success: false, message: "Access denied: insufficient role" });
+    }
+
+    // Find all tasks owned by this customer
+    const userTasks = await Task.find({ customerId: req.user.userId });
+    const taskIds = userTasks.map(t => t._id);
+
+    // Find all requests for these tasks
+    const requests = await AcceptRequest.find({ taskId: { $in: taskIds } }).populate("taskId").populate("freelancerId", "name phone skills");
+
+    return res.status(200).json({ success: true, data: requests });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+module.exports = { sendRequest, getRequests, acceptRequest, rejectRequest, getMyRequest, getFreelancerRequests, getCustomerReceivedRequests };

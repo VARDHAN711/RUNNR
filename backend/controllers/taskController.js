@@ -141,7 +141,7 @@ const getTaskById = async (req, res) => {
       const isAssigned = task.assignedFreelancerId && task.assignedFreelancerId._id.toString() === requesterId;
 
       if (!isOwner && !isAssigned) {
-        return res.status(403).json({ success: false, message: "Access denied: insufficient role" });
+        return res.status(403).json({ success: false, message: "Access denied: you are not authorized to view this task" });
       }
     }
 
@@ -333,4 +333,51 @@ const updateTaskStatus = async (req, res) => {
   }
 };
 
-module.exports = { createTask, getOpenTasks, getTaskById, updateTask, deleteTask, updateTaskStatus };
+const getMyTasks = async (req, res) => {
+  try {
+    if (req.user.role !== "customer") {
+      return res.status(403).json({ success: false, message: "Access denied: insufficient role" });
+    }
+
+    const tasks = await Task.find({ customerId: req.user.userId }).sort({ postedDate: -1 });
+
+    return res.status(200).json({ success: true, data: tasks });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+/**
+ * @swagger
+ * /api/tasks/freelancer-tasks:
+ *   get:
+ *     summary: Get tasks assigned to the current freelancer
+ *     description: Accessible by freelancers only. Returns all tasks where assignedFreelancerId matches the logged-in user.
+ *     tags: [Tasks]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of tasks for the freelancer
+ *       403:
+ *         description: Access denied
+ *       500:
+ *         description: Server error
+ */
+const getFreelancerTasks = async (req, res) => {
+  try {
+    if (req.user.role !== "freelancer") {
+      return res.status(403).json({ success: false, message: "Access denied: insufficient role" });
+    }
+
+    const tasks = await Task.find({ assignedFreelancerId: req.user.userId })
+      .populate("customerId", "name phone")
+      .sort({ postedDate: -1 });
+
+    return res.status(200).json({ success: true, data: tasks });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+module.exports = { createTask, getOpenTasks, getTaskById, updateTask, deleteTask, updateTaskStatus, getMyTasks, getFreelancerTasks };
