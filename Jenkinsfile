@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        NODE_VERSION     = '22'
+        NODE_VERSION     = '25'
         BACKEND_PORT     = '5000'
         FRONTEND_PORT    = '5173'
         IMAGE_TAG        = "${env.BUILD_NUMBER}"
