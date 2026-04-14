@@ -63,8 +63,10 @@ pipeline {
                 stage('Frontend - ESLint') {
                     steps {
                         dir('frontend') {
-                            // Replaced sh with bat
-                            bat 'npx eslint . --ext js,jsx --report-unused-disable-directives || echo "Lint errors found, but continuing"'
+                            // This allows the pipeline to continue even if ESLint fails
+                            catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                                bat 'npx eslint . --ext js,jsx --report-unused-disable-directives'
+                            }
                         }
                     }
                 }
