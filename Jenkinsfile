@@ -2,11 +2,11 @@ pipeline {
     agent any
 
     tools {
-        nodejs 'NodeJS-20'   // must match the name configured in Jenkins → Global Tool Configuration
+        nodejs 'NodeJS'   // must match the name configured in Jenkins → Global Tool Configuration
     }
 
     environment {
-        NODE_VERSION     = '20'   // LTS — 25 does not exist
+        NODE_VERSION     = '20'   
         BACKEND_PORT     = '5000'
         FRONTEND_PORT    = '5173'
         IMAGE_TAG        = "${env.BUILD_NUMBER}"
@@ -32,16 +32,18 @@ pipeline {
                 stage('Backend - npm install') {
                     steps {
                         dir('backend') {
-                            sh 'node --version'
-                            sh 'npm --version'
-                            sh 'npm ci'
+                            // Replaced sh with bat
+                            bat 'node --version'
+                            bat 'npm --version'
+                            bat 'npm ci'
                         }
                     }
                 }
                 stage('Frontend - npm install') {
                     steps {
                         dir('frontend') {
-                            sh 'npm ci'
+                            // Replaced sh with bat
+                            bat 'npm ci'
                         }
                     }
                 }
@@ -53,16 +55,16 @@ pipeline {
                 stage('Backend - Lint') {
                     steps {
                         dir('backend') {
-                            sh 'npm run lint --if-present || echo "No lint script configured for backend - skipping"'
+                            // Replaced sh with bat
+                            bat 'npm run lint --if-present || echo "No lint script configured for backend - skipping"'
                         }
                     }
                 }
                 stage('Frontend - ESLint') {
                     steps {
                         dir('frontend') {
-                            // removed --max-warnings 0 from the lint script call
-                            // OR override it here so warnings don't fail the build
-                            sh 'npx eslint . --ext js,jsx --report-unused-disable-directives || true'
+                            // Replaced sh with bat
+                            bat 'npx eslint . --ext js,jsx --report-unused-disable-directives || echo "Lint errors found, but continuing"'
                         }
                     }
                 }
@@ -74,14 +76,16 @@ pipeline {
                 stage('Backend - Unit Tests') {
                     steps {
                         dir('backend') {
-                            sh 'npm run test --if-present || echo "No test script configured for backend - skipping"'
+                            // Replaced sh with bat
+                            bat 'npm run test --if-present || echo "No test script configured for backend - skipping"'
                         }
                     }
                 }
                 stage('Frontend - Unit Tests') {
                     steps {
                         dir('frontend') {
-                            sh 'npm run test --if-present || echo "No test script configured for frontend - skipping"'
+                            // Replaced sh with bat
+                            bat 'npm run test --if-present || echo "No test script configured for frontend - skipping"'
                         }
                     }
                 }
@@ -93,7 +97,8 @@ pipeline {
                 stage('Frontend - Vite Build') {
                     steps {
                         dir('frontend') {
-                            sh 'npm run build'
+                            // Replaced sh with bat
+                            bat 'npm run build'
                             echo "Frontend build artifacts in frontend/dist/"
                         }
                     }
@@ -101,7 +106,8 @@ pipeline {
                 stage('Backend - Verify') {
                     steps {
                         dir('backend') {
-                            sh 'node -c index.js && echo "Backend syntax OK"'
+                            // Replaced sh with bat
+                            bat 'node -c index.js && echo "Backend syntax OK"'
                         }
                     }
                 }
