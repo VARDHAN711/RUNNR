@@ -42,8 +42,7 @@ pipeline {
                 stage('Frontend - npm install') {
                     steps {
                         dir('frontend') {
-                            // Replaced sh with bat
-                            bat 'npm ci'
+                            bat 'npm install --legacy-peer-deps'
                         }
                     }
                 }
