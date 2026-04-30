@@ -1,6 +1,8 @@
-const mongoose = require("mongoose");
+import mongoose, { Schema, model } from 'mongoose';
+import { IAcceptRequest } from '../types/interfaces';
+import { RequestStatus } from '../types/enums';
 
-const acceptRequestSchema = new mongoose.Schema({
+const acceptRequestSchema = new Schema<IAcceptRequest>({
   taskId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Task",
@@ -19,8 +21,8 @@ const acceptRequestSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["pending", "accepted", "rejected"],
-    default: "pending",
+    enum: Object.values(RequestStatus),
+    default: RequestStatus.PENDING,
   },
   createdAt: {
     type: Date,
@@ -28,4 +30,4 @@ const acceptRequestSchema = new mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model("AcceptRequest", acceptRequestSchema);
+export default model<IAcceptRequest>("AcceptRequest", acceptRequestSchema);

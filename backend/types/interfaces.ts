@@ -1,3 +1,4 @@
+import { Types } from 'mongoose';
 import { UserRole, TaskStatus, RequestStatus } from './enums';
 
 export interface IUser {
@@ -14,7 +15,7 @@ export interface IUser {
 
 export interface ITask {
   _id?: string;
-  customerId: string;
+  customerId: string | Types.ObjectId;
   title: string;
   description: string;
   location: string;
@@ -22,13 +23,13 @@ export interface ITask {
   deadline: Date;
   postedDate?: Date;
   status: TaskStatus;
-  assignedFreelancerId?: string | null;
+  assignedFreelancerId?: string | Types.ObjectId | null;
 }
 
 export interface IAcceptRequest {
   _id?: string;
-  taskId: string;
-  freelancerId: string;
+  taskId: string | Types.ObjectId;
+  freelancerId: string | Types.ObjectId;
   topUpAmount: number;
   status: RequestStatus;
   createdAt?: Date;

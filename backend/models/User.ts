@@ -1,9 +1,11 @@
-const mongoose = require("mongoose");
+import mongoose, { Schema, model, Document } from 'mongoose';
+import { IUser } from '../types/interfaces';
+import { UserRole } from '../types/enums';
 
-const userSchema = new mongoose.Schema({
+const userSchema = new Schema<IUser>({
   name: {
     type: String,
-    required: [true, "Name is required"],
+    required: false,
     trim: true,
   },
   email: {
@@ -24,12 +26,17 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ["customer", "freelancer"],
+    enum: Object.values(UserRole),
     required: [true, "Role is required"],
   },
   skills: {
     type: String,
     default: null,
+  },
+  employeeId: {
+    type: String,
+    required: false,
+    trim: true,
   },
   createdAt: {
     type: Date,
@@ -37,4 +44,4 @@ const userSchema = new mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model("User", userSchema);
+export default model<IUser>("User", userSchema);

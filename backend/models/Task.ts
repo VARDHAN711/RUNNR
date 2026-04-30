@@ -1,6 +1,8 @@
-const mongoose = require("mongoose");
+import mongoose, { Schema, model } from 'mongoose';
+import { ITask } from '../types/interfaces';
+import { TaskStatus } from '../types/enums';
 
-const taskSchema = new mongoose.Schema({
+const taskSchema = new Schema<ITask>({
   customerId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
@@ -36,8 +38,8 @@ const taskSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["open", "assigned", "completed"],
-    default: "open",
+    enum: Object.values(TaskStatus),
+    default: TaskStatus.OPEN,
   },
   assignedFreelancerId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -46,4 +48,4 @@ const taskSchema = new mongoose.Schema({
   },
 });
 
-module.exports = mongoose.model("Task", taskSchema);
+export default model<ITask>("Task", taskSchema);
