@@ -5,14 +5,17 @@ import LoadingSpinner from '../../components/LoadingSpinner';
 import ErrorMessage from '../../components/ErrorMessage';
 import TaskCard from '../../components/TaskCard';
 import { Briefcase, CheckCircle2, PackageSearch, ArrowLeft, RefreshCw } from 'lucide-react';
+import { ITask, IAcceptRequest, UserRole, TaskStatus } from '../../types';
 
-const MyTasksPage = () => {
-  const [activeTab, setActiveTab] = useState('assigned'); // 'assigned' or 'completed'
-  const [tasks, setTasks] = useState([]);
-  const [requests, setRequests] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState('');
+type ActiveTab = TaskStatus.ASSIGNED | TaskStatus.COMPLETED;
+
+const MyTasksPage: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<ActiveTab>(TaskStatus.ASSIGNED);
+  const [tasks, setTasks] = useState<ITask[]>([]);
+  const [requests, setRequests] = useState<IAcceptRequest[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');
   const navigate = useNavigate();
 
   const fetchMyTasks = async (showLoading = true) => {
@@ -26,7 +29,7 @@ const MyTasksPage = () => {
       ]);
       setTasks(tasksRes.data.data);
       setRequests(requestsRes.data.data);
-    } catch (err) {
+    } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to fetch your tasks.');
     } finally {
       setLoading(false);
@@ -40,8 +43,7 @@ const MyTasksPage = () => {
 
   const filteredTasks = tasks.filter(task => task.status === activeTab);
 
-  const onViewDetail = (taskId) => {
-    // Both views use the same detail component for freelancers
+  const onViewDetail = (taskId: string) => {
     navigate(`/freelancer/tasks/${taskId}`);
   };
 
@@ -74,9 +76,9 @@ const MyTasksPage = () => {
       {/* Tabs */}
       <div className="flex p-1 bg-gray-100 rounded-2xl w-full max-w-sm">
         <button
-          onClick={() => setActiveTab('assigned')}
+          onClick={() => setActiveTab(TaskStatus.ASSIGNED)}
           className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold transition-all ${
-            activeTab === 'assigned'
+            activeTab === TaskStatus.ASSIGNED
               ? 'bg-white text-primary shadow-sm'
               : 'text-gray-500 hover:text-gray-700'
           }`}
@@ -85,9 +87,9 @@ const MyTasksPage = () => {
           <span>Assigned</span>
         </button>
         <button
-          onClick={() => setActiveTab('completed')}
+          onClick={() => setActiveTab(TaskStatus.COMPLETED)}
           className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-bold transition-all ${
-            activeTab === 'completed'
+            activeTab === TaskStatus.COMPLETED
               ? 'bg-white text-green-600 shadow-sm'
               : 'text-gray-500 hover:text-gray-700'
           }`}
@@ -108,11 +110,11 @@ const MyTasksPage = () => {
           </div>
           <h3 className="text-lg font-semibold text-gray-900">No {activeTab} tasks</h3>
           <p className="text-gray-500">
-            {activeTab === 'assigned' 
+            {activeTab === TaskStatus.ASSIGNED 
               ? "You haven't been assigned any tasks yet." 
               : "Complete your assigned tasks to see them here."}
           </p>
-          {activeTab === 'assigned' && (
+          {activeTab === TaskStatus.ASSIGNED && (
             <button
               onClick={() => navigate('/freelancer/dashboard')}
               className="mt-6 px-6 py-2.5 bg-primary text-white rounded-xl font-medium hover:bg-primary-dark transition"
@@ -127,8 +129,11 @@ const MyTasksPage = () => {
             <TaskCard
               key={task._id}
               task={task}
-              role="freelancer"
+              role={UserRole.FREELANCER}
               onViewDetail={onViewDetail}
+              onEdit={() => {}} // Placeholder
+              onDelete={() => {}} // Placeholder
+              onViewRequests={() => {}} // Placeholder
               requests={requests}
             />
           ))}

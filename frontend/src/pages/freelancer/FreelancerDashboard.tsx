@@ -5,12 +5,13 @@ import TaskCard from '../../components/TaskCard';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import ErrorMessage from '../../components/ErrorMessage';
 import { Search, RefreshCw, Briefcase } from 'lucide-react';
+import { ITask, IAcceptRequest, UserRole } from '../../types';
 
-const FreelancerDashboard = () => {
-  const [tasks, setTasks] = useState([]);
-  const [requests, setRequests] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+const FreelancerDashboard: React.FC = () => {
+  const [tasks, setTasks] = useState<ITask[]>([]);
+  const [requests, setRequests] = useState<IAcceptRequest[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>('');
   const navigate = useNavigate();
 
   const fetchOpenTasks = async () => {
@@ -23,7 +24,7 @@ const FreelancerDashboard = () => {
       ]);
       setTasks(tasksRes.data.data);
       setRequests(requestsRes.data.data);
-    } catch (err) {
+    } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to fetch dashboard data.');
     } finally {
       setLoading(false);
@@ -34,7 +35,7 @@ const FreelancerDashboard = () => {
     fetchOpenTasks();
   }, []);
 
-  const onViewDetail = (taskId) => {
+  const onViewDetail = (taskId: string) => {
     navigate(`/freelancer/tasks/${taskId}`);
   };
 
@@ -76,8 +77,11 @@ const FreelancerDashboard = () => {
             <TaskCard
               key={task._id}
               task={task}
-              role="freelancer"
+              role={UserRole.FREELANCER}
               onViewDetail={onViewDetail}
+              onEdit={() => {}} // Placeholder for required props
+              onDelete={() => {}} // Placeholder for required props
+              onViewRequests={() => {}} // Placeholder for required props
               requests={requests}
             />
           ))}

@@ -5,19 +5,20 @@ import LoadingSpinner from '../../components/LoadingSpinner';
 import ErrorMessage from '../../components/ErrorMessage';
 import StatusBadge from '../../components/StatusBadge';
 import { ArrowLeft, Calendar, MapPin, IndianRupee, Clock, Send, CheckCircle, Info, Loader2, Phone } from 'lucide-react';
+import { PopulatedTask, IAcceptRequest, TaskStatus } from '../../types';
 
-const FreelancerTaskDetail = () => {
-  const { id } = useParams();
+const FreelancerTaskDetail: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [task, setTask] = useState(null);
-  const [requests, setRequests] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [task, setTask] = useState<PopulatedTask | null>(null);
+  const [requests, setRequests] = useState<IAcceptRequest[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>('');
   
-  const [topUpAmount, setTopUpAmount] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [requestSent, setRequestSent] = useState(false);
-  const [feedback, setFeedback] = useState({ type: '', msg: '' });
+  const [topUpAmount, setTopUpAmount] = useState<string>('');
+  const [submitting, setSubmitting] = useState<boolean>(false);
+  const [requestSent, setRequestSent] = useState<boolean>(false);
+  const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | ''; msg: string }>({ type: '', msg: '' });
 
   useEffect(() => {
     const fetchTaskAndRequests = async () => {
@@ -33,7 +34,7 @@ const FreelancerTaskDetail = () => {
           setRequestSent(true);
           setRequests([myReq]);
         }
-      } catch (err) {
+      } catch (err: any) {
         setError(err.response?.data?.message || 'Failed to fetch task details.');
       } finally {
         setLoading(false);
@@ -42,7 +43,7 @@ const FreelancerTaskDetail = () => {
     fetchTaskAndRequests();
   }, [id]);
 
-  const handleSubmitRequest = async (e) => {
+  const handleSubmitRequest = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const amount = Number(topUpAmount) || 0;
     
@@ -57,7 +58,7 @@ const FreelancerTaskDetail = () => {
       await axiosInstance.post(`/tasks/${id}/requests`, { topUpAmount: amount });
       setRequestSent(true);
       setFeedback({ type: 'success', msg: 'Request sent successfully!' });
-    } catch (err) {
+    } catch (err: any) {
       setFeedback({ type: 'error', msg: err.response?.data?.message || 'Failed to send request.' });
     } finally {
       setSubmitting(false);
@@ -69,7 +70,7 @@ const FreelancerTaskDetail = () => {
   if (!task) return <ErrorMessage message="Task not found" />;
 
   const acceptedRequest = requests.find(r => r.status === 'accepted');
-  const isAssignedOrCompleted = ['assigned', 'completed'].includes(task.status);
+  const isAssignedOrCompleted = [TaskStatus.ASSIGNED, TaskStatus.COMPLETED].includes(task.status);
 
   const base = task.basePrice || 0;
   const topUp = Number(topUpAmount) || 0;
@@ -120,7 +121,7 @@ const FreelancerTaskDetail = () => {
               <span className="text-gray-400 text-xs uppercase font-bold tracking-wider">Posted</span>
               <div className="flex items-center gap-2 text-gray-700 font-medium text-sm">
                 <Clock size={16} className="text-primary" />
-                <span>{new Date(task.postedDate).toLocaleDateString()}</span>
+                <span>{new Date(task.postedDate || '').toLocaleDateString()}</span>
               </div>
             </div>
           </div>
@@ -153,7 +154,7 @@ const FreelancerTaskDetail = () => {
 
         {/* Action Section */}
         <div className="p-8 bg-gray-50/50 border-t border-gray-100">
-          {task.status === 'open' ? (
+          {task.status === TaskStatus.OPEN ? (
             requestSent ? (
               <div className="bg-green-50 p-6 rounded-2xl border border-green-200 flex flex-col items-center text-center">
                 <CheckCircle size={48} className="text-green-500 mb-3" />
@@ -224,7 +225,7 @@ const FreelancerTaskDetail = () => {
           ) : (
             <div className="bg-blue-50 p-6 rounded-2xl border border-blue-200 flex flex-col items-center text-center">
               <Info size={40} className="text-blue-500 mb-3" />
-              <h3 className="text-xl font-bold text-blue-900">Task {task.status === 'completed' ? 'Completed' : 'Assigned'}</h3>
+              <h3 className="text-xl font-bold text-blue-900">Task {task.status === TaskStatus.COMPLETED ? 'Completed' : 'Assigned'}</h3>
               <p className="text-blue-700 mt-1">This task is already being handled.</p>
             </div>
           )}

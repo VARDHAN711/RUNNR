@@ -66,6 +66,13 @@ pipeline {
                         }
                     }
                 }
+                stage('Frontend - Type Check') {
+                    steps {
+                        dir('frontend') {
+                            bat 'npm run type-check'
+                        }
+                    }
+                }
             }
         }
 

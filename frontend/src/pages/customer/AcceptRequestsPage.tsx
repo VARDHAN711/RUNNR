@@ -5,21 +5,22 @@ import LoadingSpinner from '../../components/LoadingSpinner';
 import ErrorMessage from '../../components/ErrorMessage';
 import StatusBadge from '../../components/StatusBadge';
 import { ArrowLeft, User, Phone, IndianRupee, Check, X, Info, RefreshCw } from 'lucide-react';
+import { PopulatedAcceptRequest } from '../../types';
 
-const AcceptRequestsPage = () => {
-  const { id } = useParams();
+const AcceptRequestsPage: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [requests, setRequests] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState('');
-  const [actionLoading, setActionLoading] = useState(null); // stores requestId
+  const [requests, setRequests] = useState<PopulatedAcceptRequest[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');
+  const [actionLoading, setActionLoading] = useState<string | null>(null); // stores requestId
 
   const fetchRequests = useCallback(async () => {
     try {
       const res = await axiosInstance.get(`/tasks/${id}/requests`);
       setRequests(res.data.data);
-    } catch (err) {
+    } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to fetch requests.');
     } finally {
       setLoading(false);
@@ -30,12 +31,12 @@ const AcceptRequestsPage = () => {
     fetchRequests();
   }, [fetchRequests]);
 
-  const handleAction = async (requestId, action) => {
+  const handleAction = async (requestId: string, action: 'accept' | 'reject') => {
     setActionLoading(requestId);
     try {
       await axiosInstance.patch(`/tasks/${id}/requests/${requestId}/${action}`);
       await fetchRequests(); // Refresh list to show updated statuses
-    } catch (err) {
+    } catch (err: any) {
       alert(err.response?.data?.message || `Failed to ${action} request.`);
     } finally {
       setActionLoading(null);
@@ -130,7 +131,7 @@ const AcceptRequestsPage = () => {
                   <>
                     <button
                       onClick={() => handleAction(request._id, 'reject')}
-                      disabled={actionLoading}
+                      disabled={actionLoading !== null}
                       className="p-2 text-red-600 hover:bg-red-50 rounded-full transition disabled:opacity-50"
                       title="Reject"
                     >
@@ -138,7 +139,7 @@ const AcceptRequestsPage = () => {
                     </button>
                     <button
                       onClick={() => handleAction(request._id, 'accept')}
-                      disabled={actionLoading}
+                      disabled={actionLoading !== null}
                       className="inline-flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition shadow-sm disabled:opacity-50"
                     >
                       {actionLoading === request._id ? <RefreshCw className="animate-spin" size={18} /> : <Check size={18} />}

@@ -1,19 +1,49 @@
 import React from 'react';
 import { Calendar, MapPin, IndianRupee, Eye, Trash2, Edit2, Users } from 'lucide-react';
 import StatusBadge from './StatusBadge';
+import { ITask, IAcceptRequest, UserRole } from '../types';
 
-const TaskCard = ({ task, role, onEdit, onDelete, onViewRequests, onViewDetail, requests = [] }) => {
-  const isCustomer = role === 'customer';
-  const isFreelancer = role === 'freelancer';
+interface TaskCardProps {
+  task: ITask;
+  role: UserRole;
+  onEdit: (task: ITask) => void;
+  onDelete: (taskId: string) => void;
+  onViewRequests: (taskId: string) => void;
+  onViewDetail: (taskId: string) => void;
+  requests?: IAcceptRequest[];
+}
+
+// Type guard to resolve taskId whether it's a populated object or a plain string ID
+const resolveTaskId = (taskId: IAcceptRequest['taskId']): string => {
+  if (typeof taskId === 'string') return taskId;
+  return taskId._id;
+};
+
+const getBasePrice = (taskId: IAcceptRequest['taskId']): number => {
+  if (typeof taskId === 'string') return 0;
+  return taskId.basePrice;
+};
+
+const TaskCard: React.FC<TaskCardProps> = ({
+  task,
+  role,
+  onEdit,
+  onDelete,
+  onViewRequests,
+  onViewDetail,
+  requests = [],
+}) => {
+  const isCustomer = role === UserRole.CUSTOMER;
+  const isFreelancer = role === UserRole.FREELANCER;
   const isOpen = task.status === 'open';
   const isAssignedOrCompleted = ['assigned', 'completed'].includes(task.status);
 
-  const acceptedRequest = isAssignedOrCompleted && requests.find(r => 
-    r.taskId?._id === task._id && r.status === 'accepted'
-  );
+  const acceptedRequest = isAssignedOrCompleted
+    ? requests.find(r => resolveTaskId(r.taskId) === task._id && r.status === 'accepted')
+    : undefined;
 
-  const hasRequested = isFreelancer && requests.some(r => 
-    (r.taskId?._id || r.taskId) === task._id
+  const hasRequested = isFreelancer && requests.some(r =>
+    resolveTaskId(r.taskId) === task._id
   );
 
   return (
@@ -45,7 +75,7 @@ const TaskCard = ({ task, role, onEdit, onDelete, onViewRequests, onViewDetail, 
             {acceptedRequest ? (
               <span className="flex flex-col">
                 <span className="text-xs text-gray-400 uppercase font-bold tracking-wider mb-0.5">Final Bid</span>
-                <span>{acceptedRequest.taskId.basePrice + acceptedRequest.topUpAmount}</span>
+                <span>{getBasePrice(acceptedRequest.taskId) + acceptedRequest.topUpAmount}</span>
               </span>
             ) : (
               <span className="flex flex-col">

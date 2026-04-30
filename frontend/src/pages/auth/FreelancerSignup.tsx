@@ -5,17 +5,27 @@ import axiosInstance from '../../api/axiosInstance';
 import ErrorMessage from '../../components/ErrorMessage';
 import { User, Mail, Lock, Phone, Wrench, ArrowRight, Loader2 } from 'lucide-react';
 
-const FreelancerSignup = () => {
-  const [formData, setFormData] = useState({ name: '', email: '', password: '', phone: '', skills: '' });
-  const [errors, setErrors] = useState({});
-  const [apiError, setApiError] = useState('');
-  const [loading, setLoading] = useState(false);
+interface SignupFormData {
+  name: string;
+  email: string;
+  password: string;
+  phone: string;
+  skills: string;
+}
+
+type FormErrors = Partial<Record<keyof SignupFormData, string>>;
+
+const FreelancerSignup: React.FC = () => {
+  const [formData, setFormData] = useState<SignupFormData>({ name: '', email: '', password: '', phone: '', skills: '' });
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [apiError, setApiError] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
   
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const validate = () => {
-    const newErrors = {};
+  const validate = (): FormErrors => {
+    const newErrors: FormErrors = {};
     if (!formData.name) newErrors.name = 'Name is required';
     if (!formData.email) newErrors.email = 'Email is required';
     else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Invalid email format';
@@ -26,7 +36,7 @@ const FreelancerSignup = () => {
     return newErrors;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
@@ -40,7 +50,7 @@ const FreelancerSignup = () => {
       const res = await axiosInstance.post('/auth/signup', { ...formData, role: 'freelancer' });
       login(res.data.token, res.data.role, res.data.userId);
       navigate('/freelancer/dashboard');
-    } catch (err) {
+    } catch (err: any) {
       setApiError(err.response?.data?.message || 'Signup failed. Please try again.');
     } finally {
       setLoading(false);
@@ -121,7 +131,7 @@ const FreelancerSignup = () => {
           <div className="relative">
             <span className="absolute left-3 top-3 text-gray-400"><Wrench size={18} /></span>
             <textarea
-              rows="2"
+              rows={2}
               className={`w-full pl-10 pr-4 py-2.5 bg-gray-50 border ${errors.skills ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition text-black`}
               placeholder="Plumbing, Delivery, Electrical..."
               value={formData.skills}

@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { User, Briefcase } from 'lucide-react';
 
-const RoleSelectionPage = () => {
+const RoleSelectionPage: React.FC = () => {
   const navigate = useNavigate();
 
   return (

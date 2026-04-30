@@ -1,15 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axiosInstance from '../../api/axiosInstance';
 import ErrorMessage from '../../components/ErrorMessage';
 import { ArrowLeft, Save, Loader2, Calendar, MapPin, IndianRupee, FileText } from 'lucide-react';
+import { ITask } from '../../types';
 
-const PostTaskPage = () => {
+interface PostTaskFormData {
+  title: string;
+  description: string;
+  location: string;
+  basePrice: string | number;
+  deadline: string;
+}
+
+type FormErrors = Partial<Record<keyof PostTaskFormData, string>>;
+
+const PostTaskPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const editingTask = location.state?.task;
+  const editingTask = location.state?.task as ITask | undefined;
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<PostTaskFormData>({
     title: editingTask?.title || '',
     description: editingTask?.description || '',
     location: editingTask?.location || '',
@@ -17,16 +28,16 @@ const PostTaskPage = () => {
     deadline: editingTask?.deadline ? new Date(editingTask.deadline).toISOString().split('T')[0] : '',
   });
 
-  const [errors, setErrors] = useState({});
-  const [apiError, setApiError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [apiError, setApiError] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
 
-  const validate = () => {
-    const newErrors = {};
+  const validate = (): FormErrors => {
+    const newErrors: FormErrors = {};
     if (!formData.title) newErrors.title = 'Title is required';
     if (!formData.description) newErrors.description = 'Description is required';
     if (!formData.location) newErrors.location = 'Location is required';
-    if (!formData.basePrice || formData.basePrice <= 0) newErrors.basePrice = 'Price must be a positive number';
+    if (!formData.basePrice || Number(formData.basePrice) <= 0) newErrors.basePrice = 'Price must be a positive number';
     
     if (!formData.deadline) {
       newErrors.deadline = 'Deadline is required';
@@ -40,7 +51,7 @@ const PostTaskPage = () => {
     return newErrors;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
@@ -57,7 +68,7 @@ const PostTaskPage = () => {
         await axiosInstance.post('/tasks', formData);
       }
       navigate('/customer/dashboard');
-    } catch (err) {
+    } catch (err: any) {
       setApiError(err.response?.data?.message || 'Failed to save task.');
     } finally {
       setLoading(false);
@@ -101,7 +112,7 @@ const PostTaskPage = () => {
               Description
             </label>
             <textarea
-              rows="4"
+              rows={4}
               className={`w-full px-4 py-3 bg-gray-50 border ${errors.description ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition`}
               placeholder="Describe the task in detail..."
               value={formData.description}
@@ -142,18 +153,20 @@ const PostTaskPage = () => {
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-2">
-              <Calendar size={16} className="text-primary" />
-              Deadline
-            </label>
-            <input
-              type="date"
-              className={`w-full px-4 py-3 bg-gray-50 border ${errors.deadline ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition`}
-              value={formData.deadline}
-              onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
-            />
-            {errors.deadline && <p className="mt-1 text-xs text-red-500 font-medium">{errors.deadline}</p>}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-2">
+                <Calendar size={16} className="text-primary" />
+                Deadline
+              </label>
+              <input
+                type="date"
+                className={`w-full px-4 py-3 bg-gray-50 border ${errors.deadline ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition`}
+                value={formData.deadline}
+                onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
+              />
+              {errors.deadline && <p className="mt-1 text-xs text-red-500 font-medium">{errors.deadline}</p>}
+            </div>
           </div>
 
           <ErrorMessage message={apiError} />

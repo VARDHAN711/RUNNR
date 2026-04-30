@@ -1,7 +1,12 @@
 import React from 'react';
+import { TaskStatus, RequestStatus } from '../types';
 
-const StatusBadge = ({ status }) => {
-  const getColors = (status) => {
+interface StatusBadgeProps {
+  status: TaskStatus | RequestStatus | string;
+}
+
+const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
+  const getColors = (status: string): string => {
     switch (status.toLowerCase()) {
       case 'open':
         return 'bg-blue-100 text-blue-800 border-blue-200';

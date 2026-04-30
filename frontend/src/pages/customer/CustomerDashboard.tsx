@@ -7,14 +7,15 @@ import LoadingSpinner from '../../components/LoadingSpinner';
 import ErrorMessage from '../../components/ErrorMessage';
 import ConfirmModal from '../../components/ConfirmModal';
 import { PackageOpen, RefreshCw } from 'lucide-react';
+import { ITask, IAcceptRequest, UserRole } from '../../types';
 
-const CustomerDashboard = () => {
-  const [tasks, setTasks] = useState([]);
-  const [requests, setRequests] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [deleteModal, setDeleteModal] = useState({ isOpen: false, taskId: null });
-  const [deleteLoading, setDeleteLoading] = useState(false);
+const CustomerDashboard: React.FC = () => {
+  const [tasks, setTasks] = useState<ITask[]>([]);
+  const [requests, setRequests] = useState<IAcceptRequest[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>('');
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; taskId: string | null }>({ isOpen: false, taskId: null });
+  const [deleteLoading, setDeleteLoading] = useState<boolean>(false);
 
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -29,7 +30,7 @@ const CustomerDashboard = () => {
       ]);
       setTasks(tasksRes.data.data);
       setRequests(requestsRes.data.data);
-    } catch (err) {
+    } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to fetch tasks.');
     } finally {
       setLoading(false);
@@ -40,32 +41,33 @@ const CustomerDashboard = () => {
     fetchTasks();
   }, []);
 
-  const handleEdit = (task) => {
+  const handleEdit = (task: ITask) => {
     navigate('/customer/post-task', { state: { task } });
   };
 
-  const handleDeleteClick = (taskId) => {
+  const handleDeleteClick = (taskId: string) => {
     setDeleteModal({ isOpen: true, taskId });
   };
 
   const confirmDelete = async () => {
+    if (!deleteModal.taskId) return;
     setDeleteLoading(true);
     try {
       await axiosInstance.delete(`/tasks/${deleteModal.taskId}`);
       setTasks(tasks.filter(t => t._id !== deleteModal.taskId));
       setDeleteModal({ isOpen: false, taskId: null });
-    } catch (err) {
+    } catch (err: any) {
       alert(err.response?.data?.message || 'Failed to delete task.');
     } finally {
       setDeleteLoading(false);
     }
   };
 
-  const onViewRequests = (taskId) => {
+  const onViewRequests = (taskId: string) => {
     navigate(`/customer/tasks/${taskId}/requests`);
   };
 
-  const onViewDetail = (taskId) => {
+  const onViewDetail = (taskId: string) => {
     navigate(`/customer/tasks/${taskId}`);
   };
 
@@ -109,7 +111,7 @@ const CustomerDashboard = () => {
             <TaskCard
               key={task._id}
               task={task}
-              role="customer"
+              role={UserRole.CUSTOMER}
               onEdit={handleEdit}
               onDelete={handleDeleteClick}
               onViewRequests={onViewRequests}

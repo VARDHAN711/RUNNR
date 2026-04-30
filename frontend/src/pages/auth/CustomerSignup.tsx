@@ -5,17 +5,26 @@ import axiosInstance from '../../api/axiosInstance';
 import ErrorMessage from '../../components/ErrorMessage';
 import { User, Mail, Lock, Phone, ArrowRight, Loader2 } from 'lucide-react';
 
-const CustomerSignup = () => {
-  const [formData, setFormData] = useState({ name: '', email: '', password: '', phone: '' });
-  const [errors, setErrors] = useState({});
-  const [apiError, setApiError] = useState('');
-  const [loading, setLoading] = useState(false);
-  
+interface SignupFormData {
+  name: string;
+  email: string;
+  password: string;
+  phone: string;
+}
+
+type FormErrors = Partial<Record<keyof SignupFormData, string>>;
+
+const CustomerSignup: React.FC = () => {
+  const [formData, setFormData] = useState<SignupFormData>({ name: '', email: '', password: '', phone: '' });
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [apiError, setApiError] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
+
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const validate = () => {
-    const newErrors = {};
+  const validate = (): FormErrors => {
+    const newErrors: FormErrors = {};
     if (!formData.name) newErrors.name = 'Name is required';
     if (!formData.email) newErrors.email = 'Email is required';
     else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Invalid email format';
@@ -25,7 +34,7 @@ const CustomerSignup = () => {
     return newErrors;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
@@ -39,8 +48,9 @@ const CustomerSignup = () => {
       const res = await axiosInstance.post('/auth/signup', { ...formData, role: 'customer' });
       login(res.data.token, res.data.role, res.data.userId);
       navigate('/customer/dashboard');
-    } catch (err) {
-      setApiError(err.response?.data?.message || 'Signup failed. Please try again.');
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      setApiError(error.response?.data?.message || 'Signup failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -58,13 +68,7 @@ const CustomerSignup = () => {
           <label className="block text-sm font-semibold text-gray-700 mb-1.5">Full Name</label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><User size={18} /></span>
-            <input
-              type="text"
-              className={`w-full pl-10 pr-4 py-3 bg-gray-50 border ${errors.name ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition text-black`}
-              placeholder="John Doe"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            />
+            <input type="text" className={`w-full pl-10 pr-4 py-3 bg-gray-50 border ${errors.name ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition text-black`} placeholder="John Doe" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
           </div>
           {errors.name && <p className="mt-1 text-xs text-red-500 font-medium">{errors.name}</p>}
         </div>
@@ -73,13 +77,7 @@ const CustomerSignup = () => {
           <label className="block text-sm font-semibold text-gray-700 mb-1.5">Email Address</label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><Mail size={18} /></span>
-            <input
-              type="email"
-              className={`w-full pl-10 pr-4 py-3 bg-gray-50 border ${errors.email ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition text-black`}
-              placeholder="john@example.com"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            />
+            <input type="email" className={`w-full pl-10 pr-4 py-3 bg-gray-50 border ${errors.email ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition text-black`} placeholder="john@example.com" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
           </div>
           {errors.email && <p className="mt-1 text-xs text-red-500 font-medium">{errors.email}</p>}
         </div>
@@ -88,13 +86,7 @@ const CustomerSignup = () => {
           <label className="block text-sm font-semibold text-gray-700 mb-1.5">Phone Number</label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><Phone size={18} /></span>
-            <input
-              type="tel"
-              className={`w-full pl-10 pr-4 py-3 bg-gray-50 border ${errors.phone ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition text-black`}
-              placeholder="9876543210"
-              value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-            />
+            <input type="tel" className={`w-full pl-10 pr-4 py-3 bg-gray-50 border ${errors.phone ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition text-black`} placeholder="9876543210" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
           </div>
           {errors.phone && <p className="mt-1 text-xs text-red-500 font-medium">{errors.phone}</p>}
         </div>
@@ -103,24 +95,14 @@ const CustomerSignup = () => {
           <label className="block text-sm font-semibold text-gray-700 mb-1.5">Password</label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"><Lock size={18} /></span>
-            <input
-              type="password"
-              className={`w-full pl-10 pr-4 py-3 bg-gray-50 border ${errors.password ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition text-black`}
-              placeholder="••••••••"
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            />
+            <input type="password" className={`w-full pl-10 pr-4 py-3 bg-gray-50 border ${errors.password ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition text-black`} placeholder="••••••••" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} />
           </div>
           {errors.password && <p className="mt-1 text-xs text-red-500 font-medium">{errors.password}</p>}
         </div>
 
         <ErrorMessage message={apiError} />
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full py-4 bg-primary text-white rounded-xl font-bold shadow-lg shadow-blue-200 hover:bg-primary-dark transition-all flex items-center justify-center gap-2 disabled:opacity-70 group"
-        >
+        <button type="submit" disabled={loading} className="w-full py-4 bg-primary text-white rounded-xl font-bold shadow-lg shadow-blue-200 hover:bg-primary-dark transition-all flex items-center justify-center gap-2 disabled:opacity-70 group">
           {loading ? <Loader2 className="animate-spin" size={20} /> : (
             <>
               <span>Create Account</span>

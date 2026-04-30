@@ -6,18 +6,19 @@ import ErrorMessage from '../../components/ErrorMessage';
 import StatusBadge from '../../components/StatusBadge';
 import { ArrowLeft, Calendar, MapPin, IndianRupee, Clock, User, Phone, Edit, Trash2, ExternalLink, CheckCircle } from 'lucide-react';
 import ConfirmModal from '../../components/ConfirmModal';
+import { ITask, PopulatedAcceptRequest, TaskStatus } from '../../types';
 
-const CustomerTaskDetail = () => {
-  const { id } = useParams();
+const CustomerTaskDetail: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [task, setTask] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [requests, setRequests] = useState([]);
-  const [error, setError] = useState('');
-  const [actionLoading, setActionLoading] = useState(false);
-  const [showCompleteModal, setShowCompleteModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [actionError, setActionError] = useState('');
+  const [task, setTask] = useState<ITask | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [requests, setRequests] = useState<PopulatedAcceptRequest[]>([]);
+  const [error, setError] = useState<string>('');
+  const [actionLoading, setActionLoading] = useState<boolean>(false);
+  const [showCompleteModal, setShowCompleteModal] = useState<boolean>(false);
+  const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+  const [actionError, setActionError] = useState<string>('');
 
   useEffect(() => {
     const fetchTaskAndRequests = async () => {
@@ -28,7 +29,7 @@ const CustomerTaskDetail = () => {
         ]);
         setTask(taskRes.data.data);
         setRequests(requestsRes.data.data);
-      } catch (err) {
+      } catch (err: any) {
         setError(err.response?.data?.message || 'Failed to fetch task details.');
       } finally {
         setLoading(false);
@@ -41,10 +42,10 @@ const CustomerTaskDetail = () => {
     setActionLoading(true);
     setActionError('');
     try {
-      const res = await axiosInstance.patch(`/tasks/${id}/status`, { status: 'completed' });
+      const res = await axiosInstance.patch(`/tasks/${id}/status`, { status: TaskStatus.COMPLETED });
       setTask(res.data.data);
       setShowCompleteModal(false);
-    } catch (err) {
+    } catch (err: any) {
       setActionError(err.response?.data?.message || 'Failed to update task status.');
     } finally {
       setActionLoading(false);
@@ -57,7 +58,7 @@ const CustomerTaskDetail = () => {
     try {
       await axiosInstance.delete(`/tasks/${id}`);
       navigate('/customer/dashboard');
-    } catch (err) {
+    } catch (err: any) {
       setActionError(err.response?.data?.message || 'Failed to delete task.');
     } finally {
       setActionLoading(false);
@@ -65,7 +66,9 @@ const CustomerTaskDetail = () => {
   };
 
   const handleEditTask = () => {
-    navigate('/customer/post-task', { state: { task } });
+    if (task) {
+      navigate('/customer/post-task', { state: { task } });
+    }
   };
 
   const handleViewRequests = () => {
@@ -77,7 +80,7 @@ const CustomerTaskDetail = () => {
   if (!task) return <ErrorMessage message="Task not found" />;
 
   const acceptedRequest = requests.find(r => r.status === 'accepted');
-  const isAssignedOrCompleted = ['assigned', 'completed'].includes(task.status);
+  const isAssignedOrCompleted = [TaskStatus.ASSIGNED, TaskStatus.COMPLETED].includes(task.status);
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -117,14 +120,14 @@ const CustomerTaskDetail = () => {
               </span>
               <div className="flex items-center gap-2 text-gray-700 font-bold text-lg">
                 <IndianRupee size={20} className="text-primary" />
-                <span>{acceptedRequest ? acceptedRequest.basePrice + acceptedRequest.topUpAmount : task.basePrice}</span>
+                <span>{acceptedRequest ? (acceptedRequest.basePrice || 0) + acceptedRequest.topUpAmount : task.basePrice}</span>
               </div>
             </div>
             <div className="space-y-1">
               <span className="text-gray-400 text-xs uppercase font-bold tracking-wider">Posted On</span>
               <div className="flex items-center gap-2 text-gray-700 font-medium text-sm">
                 <Clock size={16} className="text-primary" />
-                <span>{new Date(task.createdAt).toLocaleDateString()}</span>
+                <span>{new Date(task.postedDate || '').toLocaleDateString()}</span>
               </div>
             </div>
           </div>
@@ -166,7 +169,7 @@ const CustomerTaskDetail = () => {
         )}
 
         <div className="p-8 bg-gray-50 border-t border-gray-100 flex flex-wrap gap-4">
-          {task.status === 'open' && (
+          {task.status === TaskStatus.OPEN && (
             <>
               <button
                 onClick={handleEditTask}
@@ -192,7 +195,7 @@ const CustomerTaskDetail = () => {
             </>
           )}
 
-          {task.status === 'assigned' && (
+          {task.status === TaskStatus.ASSIGNED && (
             <button
               onClick={() => setShowCompleteModal(true)}
               className="flex items-center gap-2 px-8 py-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition shadow-lg shadow-green-100 w-full sm:w-auto"

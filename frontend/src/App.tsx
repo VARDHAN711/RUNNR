@@ -2,28 +2,30 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
 // Layout & Context
-import Navbar from './components/Navbar';
-import ProtectedRoute from './components/ProtectedRoute';
+import Navbar from '@/components/Navbar';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 // Auth Pages
-import RoleSelectionPage from './pages/auth/RoleSelectionPage';
-import CustomerSignup from './pages/auth/CustomerSignup';
-import CustomerLogin from './pages/auth/CustomerLogin';
-import FreelancerSignup from './pages/auth/FreelancerSignup';
-import FreelancerLogin from './pages/auth/FreelancerLogin';
+import RoleSelectionPage from '@/pages/auth/RoleSelectionPage';
+import CustomerSignup from '@/pages/auth/CustomerSignup';
+import CustomerLogin from '@/pages/auth/CustomerLogin';
+import FreelancerSignup from '@/pages/auth/FreelancerSignup';
+import FreelancerLogin from '@/pages/auth/FreelancerLogin';
 
 // Customer Pages
-import CustomerDashboard from './pages/customer/CustomerDashboard';
-import PostTaskPage from './pages/customer/PostTaskPage';
-import CustomerTaskDetail from './pages/customer/CustomerTaskDetail';
-import AcceptRequestsPage from './pages/customer/AcceptRequestsPage';
+import CustomerDashboard from '@/pages/customer/CustomerDashboard';
+import PostTaskPage from '@/pages/customer/PostTaskPage';
+import CustomerTaskDetail from '@/pages/customer/CustomerTaskDetail';
+import AcceptRequestsPage from '@/pages/customer/AcceptRequestsPage';
 
 // Freelancer Pages
-import FreelancerDashboard from './pages/freelancer/FreelancerDashboard';
-import FreelancerTaskDetail from './pages/freelancer/FreelancerTaskDetail';
-import MyTasksPage from './pages/freelancer/MyTasksPage';
+import FreelancerDashboard from '@/pages/freelancer/FreelancerDashboard';
+import FreelancerTaskDetail from '@/pages/freelancer/FreelancerTaskDetail';
+import MyTasksPage from '@/pages/freelancer/MyTasksPage';
 
-function App() {
+import { UserRole } from '@/types';
+
+const App: React.FC = () => {
   return (
     <Router>
       <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
@@ -41,7 +43,7 @@ function App() {
             <Route
               path="/customer/dashboard"
               element={
-                <ProtectedRoute role="customer">
+                <ProtectedRoute role={UserRole.CUSTOMER}>
                   <CustomerDashboard />
                 </ProtectedRoute>
               }
@@ -49,7 +51,7 @@ function App() {
             <Route
               path="/customer/post-task"
               element={
-                <ProtectedRoute role="customer">
+                <ProtectedRoute role={UserRole.CUSTOMER}>
                   <PostTaskPage />
                 </ProtectedRoute>
               }
@@ -57,7 +59,7 @@ function App() {
             <Route
               path="/customer/tasks/:id"
               element={
-                <ProtectedRoute role="customer">
+                <ProtectedRoute role={UserRole.CUSTOMER}>
                   <CustomerTaskDetail />
                 </ProtectedRoute>
               }
@@ -65,7 +67,7 @@ function App() {
             <Route
               path="/customer/tasks/:id/requests"
               element={
-                <ProtectedRoute role="customer">
+                <ProtectedRoute role={UserRole.CUSTOMER}>
                   <AcceptRequestsPage />
                 </ProtectedRoute>
               }
@@ -75,7 +77,7 @@ function App() {
             <Route
               path="/freelancer/dashboard"
               element={
-                <ProtectedRoute role="freelancer">
+                <ProtectedRoute role={UserRole.FREELANCER}>
                   <FreelancerDashboard />
                 </ProtectedRoute>
               }
@@ -83,7 +85,7 @@ function App() {
             <Route
               path="/freelancer/tasks/:id"
               element={
-                <ProtectedRoute role="freelancer">
+                <ProtectedRoute role={UserRole.FREELANCER}>
                   <FreelancerTaskDetail />
                 </ProtectedRoute>
               }
@@ -91,7 +93,7 @@ function App() {
             <Route
               path="/freelancer/my-tasks"
               element={
-                <ProtectedRoute role="freelancer">
+                <ProtectedRoute role={UserRole.FREELANCER}>
                   <MyTasksPage />
                 </ProtectedRoute>
               }

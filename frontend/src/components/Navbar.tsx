@@ -1,9 +1,9 @@
 import React from 'react';
-import { LogOut, PlusCircle, LayoutDashboard, Briefcase } from 'lucide-react';
+import { LogOut, PlusCircle, Briefcase } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-const Navbar = () => {
+const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
