@@ -52,4 +52,5 @@ export interface SignupDTO {
 export interface LoginDTO {
   email: string;
   password: string;
+  role: UserRole;
 }

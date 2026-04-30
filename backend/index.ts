@@ -1,12 +1,13 @@
-require("dotenv").config();
-const express = require("express");
-const cors = require("cors");
-const mongoose = require("mongoose");
-const swaggerUi = require("swagger-ui-express");
-const swaggerSpec = require("./swagger");
+import dotenv from 'dotenv';
+dotenv.config();
+import express, { Request, Response } from 'express';
+import cors from 'cors';
+import mongoose from 'mongoose';
+import swaggerUi from 'swagger-ui-express';
+import swaggerSpec from './swagger';
 
-const authRoutes = require("./routes/authRoutes");
-const taskRoutes = require("./routes/taskRoutes");
+import authRoutes from './routes/authRoutes';
+import taskRoutes from './routes/taskRoutes';
 
 const app = express();
 
@@ -36,7 +37,7 @@ app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
  *                   type: string
  *                   example: ok
  */
-app.get("/api/health", (req, res) => {
+app.get("/api/health", (req: Request, res: Response) => {
   res.status(200).json({ status: "ok" });
 });
 
@@ -45,7 +46,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/tasks", taskRoutes);
 
 // 404 handler for unmatched routes
-app.use((req, res) => {
+app.use((req: Request, res: Response) => {
   res.status(404).json({ success: false, message: "Route not found" });
 });
 
@@ -53,7 +54,7 @@ app.use((req, res) => {
 const PORT = process.env.PORT || 5000;
 
 mongoose
-  .connect(process.env.MONGO_URI)
+  .connect(process.env.MONGO_URI as string)
   .then(() => {
     console.log("✅ Connected to MongoDB");
     app.listen(PORT, () => {
@@ -61,7 +62,7 @@ mongoose
       console.log(`📖 Swagger docs at http://localhost:${PORT}/api/docs`);
     });
   })
-  .catch((err) => {
+  .catch((err: any) => {
     console.error("❌ MongoDB connection error:", err.message);
     process.exit(1);
   });

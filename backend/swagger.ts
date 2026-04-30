@@ -1,4 +1,4 @@
-const swaggerJsdoc = require("swagger-jsdoc");
+import swaggerJsdoc from 'swagger-jsdoc';
 
 const options = {
   definition: {
@@ -31,9 +31,9 @@ const options = {
       { name: "Accept Requests", description: "Accept request management — role restrictions noted per endpoint" },
     ],
   },
-  apis: ["./routes/*.js", "./controllers/*.js", "./index.js"],
+  apis: ["./routes/*.ts", "./controllers/*.ts", "./index.ts"],
 };
 
 const swaggerSpec = swaggerJsdoc(options);
 
-module.exports = swaggerSpec;
+export default swaggerSpec;

@@ -1,7 +1,6 @@
-const express = require("express");
-const router = express.Router();
-const authMiddleware = require("../middleware/authMiddleware");
-const {
+import { Router } from 'express';
+import authMiddleware from '../middleware/authMiddleware';
+import {
   createTask,
   getOpenTasks,
   getTaskById,
@@ -10,12 +9,14 @@ const {
   updateTaskStatus,
   getMyTasks,
   getFreelancerTasks,
-} = require("../controllers/taskController");
-const {
+} from '../controllers/taskController';
+import {
   getFreelancerRequests,
   getCustomerReceivedRequests,
-} = require("../controllers/requestController");
-const requestRoutes = require("./requestRoutes");
+} from '../controllers/requestController';
+import requestRoutes from './requestRoutes';
+
+const router = Router();
 
 // ✅ Static routes first
 router.post("/", authMiddleware, createTask);
@@ -69,4 +70,4 @@ router.patch("/:id/status", authMiddleware, updateTaskStatus);
 // ✅ Nested dynamic router last
 router.use("/:taskId/requests", requestRoutes);
 
-module.exports = router;
+export default router;

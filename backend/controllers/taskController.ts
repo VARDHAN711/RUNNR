@@ -1,4 +1,7 @@
-const Task = require("../models/Task");
+import { Request, Response } from 'express';
+import Task from '../models/Task';
+import { ITask } from '../types/interfaces';
+import { TaskStatus, UserRole } from '../types/enums';
 
 /**
  * @swagger
@@ -38,9 +41,9 @@ const Task = require("../models/Task");
  *       500:
  *         description: Server error
  */
-const createTask = async (req, res) => {
+export const createTask = async (req: Request, res: Response) => {
   try {
-    if (req.user.role !== "customer") {
+    if (req.user?.role !== UserRole.CUSTOMER) {
       return res.status(403).json({ success: false, message: "Access denied: insufficient role" });
     }
 
@@ -58,11 +61,11 @@ const createTask = async (req, res) => {
       basePrice,
       deadline,
       postedDate: new Date(),
-      status: "open",
+      status: TaskStatus.OPEN,
     });
 
     return res.status(201).json({ success: true, data: task });
-  } catch (err) {
+  } catch (err: any) {
     return res.status(500).json({ success: false, message: err.message });
   }
 };
@@ -84,16 +87,16 @@ const createTask = async (req, res) => {
  *       500:
  *         description: Server error
  */
-const getOpenTasks = async (req, res) => {
+export const getOpenTasks = async (req: Request, res: Response) => {
   try {
-    if (req.user.role !== "freelancer") {
+    if (req.user?.role !== UserRole.FREELANCER) {
       return res.status(403).json({ success: false, message: "Access denied: insufficient role" });
     }
 
-    const tasks = await Task.find({ status: "open" }).populate("customerId", "name phone");
+    const tasks = await Task.find({ status: TaskStatus.OPEN }).populate("customerId", "name phone");
 
     return res.status(200).json({ success: true, data: tasks });
-  } catch (err) {
+  } catch (err: any) {
     return res.status(500).json({ success: false, message: err.message });
   }
 };
@@ -125,7 +128,7 @@ const getOpenTasks = async (req, res) => {
  *       500:
  *         description: Server error
  */
-const getTaskById = async (req, res) => {
+export const getTaskById = async (req: Request, res: Response) => {
   try {
     const task = await Task.findById(req.params.id)
       .populate("customerId", "name phone")
@@ -135,10 +138,12 @@ const getTaskById = async (req, res) => {
       return res.status(404).json({ success: false, message: "Task not found" });
     }
 
-    if (task.status === "assigned" || task.status === "completed") {
-      const requesterId = req.user.userId.toString();
-      const isOwner = task.customerId._id.toString() === requesterId;
-      const isAssigned = task.assignedFreelancerId && task.assignedFreelancerId._id.toString() === requesterId;
+    if (task.status === TaskStatus.ASSIGNED || task.status === TaskStatus.COMPLETED) {
+      const requesterId = req.user?.userId;
+      if (!requesterId) return res.status(401).json({ success: false, message: "Unauthorized" });
+
+      const isOwner = (task.customerId as any)._id.toString() === requesterId;
+      const isAssigned = task.assignedFreelancerId && (task.assignedFreelancerId as any)._id.toString() === requesterId;
 
       if (!isOwner && !isAssigned) {
         return res.status(403).json({ success: false, message: "Access denied: you are not authorized to view this task" });
@@ -146,7 +151,7 @@ const getTaskById = async (req, res) => {
     }
 
     return res.status(200).json({ success: true, data: task });
-  } catch (err) {
+  } catch (err: any) {
     return res.status(500).json({ success: false, message: err.message });
   }
 };
@@ -194,9 +199,9 @@ const getTaskById = async (req, res) => {
  *       500:
  *         description: Server error
  */
-const updateTask = async (req, res) => {
+export const updateTask = async (req: Request, res: Response) => {
   try {
-    if (req.user.role !== "customer") {
+    if (req.user?.role !== UserRole.CUSTOMER) {
       return res.status(403).json({ success: false, message: "Access denied: insufficient role" });
     }
 
@@ -205,11 +210,11 @@ const updateTask = async (req, res) => {
       return res.status(404).json({ success: false, message: "Task not found" });
     }
 
-    if (task.customerId.toString() !== req.user.userId.toString()) {
+    if (task.customerId.toString() !== req.user.userId) {
       return res.status(403).json({ success: false, message: "Access denied: insufficient role" });
     }
 
-    if (task.status !== "open") {
+    if (task.status !== TaskStatus.OPEN) {
       return res.status(403).json({ success: false, message: "Task can only be edited when status is 'open'" });
     }
 
@@ -223,7 +228,7 @@ const updateTask = async (req, res) => {
     await task.save();
 
     return res.status(200).json({ success: true, data: task });
-  } catch (err) {
+  } catch (err: any) {
     return res.status(500).json({ success: false, message: err.message });
   }
 };
@@ -253,9 +258,9 @@ const updateTask = async (req, res) => {
  *       500:
  *         description: Server error
  */
-const deleteTask = async (req, res) => {
+export const deleteTask = async (req: Request, res: Response) => {
   try {
-    if (req.user.role !== "customer") {
+    if (req.user?.role !== UserRole.CUSTOMER) {
       return res.status(403).json({ success: false, message: "Access denied: insufficient role" });
     }
 
@@ -264,18 +269,18 @@ const deleteTask = async (req, res) => {
       return res.status(404).json({ success: false, message: "Task not found" });
     }
 
-    if (task.customerId.toString() !== req.user.userId.toString()) {
+    if (task.customerId.toString() !== req.user.userId) {
       return res.status(403).json({ success: false, message: "Access denied: insufficient role" });
     }
 
-    if (task.status !== "open") {
+    if (task.status !== TaskStatus.OPEN) {
       return res.status(403).json({ success: false, message: "Task can only be deleted when status is 'open'" });
     }
 
     await Task.findByIdAndDelete(req.params.id);
 
     return res.status(200).json({ success: true, data: { message: "Task deleted successfully" } });
-  } catch (err) {
+  } catch (err: any) {
     return res.status(500).json({ success: false, message: err.message });
   }
 };
@@ -305,9 +310,9 @@ const deleteTask = async (req, res) => {
  *       500:
  *         description: Server error
  */
-const updateTaskStatus = async (req, res) => {
+export const updateTaskStatus = async (req: Request, res: Response) => {
   try {
-    if (req.user.role !== "customer") {
+    if (req.user?.role !== UserRole.CUSTOMER) {
       return res.status(403).json({ success: false, message: "Access denied: insufficient role" });
     }
 
@@ -316,33 +321,33 @@ const updateTaskStatus = async (req, res) => {
       return res.status(404).json({ success: false, message: "Task not found" });
     }
 
-    if (task.customerId.toString() !== req.user.userId.toString()) {
+    if (task.customerId.toString() !== req.user.userId) {
       return res.status(403).json({ success: false, message: "Access denied: insufficient role" });
     }
 
-    if (task.status !== "assigned") {
+    if (task.status !== TaskStatus.ASSIGNED) {
       return res.status(403).json({ success: false, message: "Task can only be marked as completed when status is 'assigned'" });
     }
 
-    task.status = "completed";
+    task.status = TaskStatus.COMPLETED;
     await task.save();
 
     return res.status(200).json({ success: true, data: task });
-  } catch (err) {
+  } catch (err: any) {
     return res.status(500).json({ success: false, message: err.message });
   }
 };
 
-const getMyTasks = async (req, res) => {
+export const getMyTasks = async (req: Request, res: Response) => {
   try {
-    if (req.user.role !== "customer") {
+    if (req.user?.role !== UserRole.CUSTOMER) {
       return res.status(403).json({ success: false, message: "Access denied: insufficient role" });
     }
 
     const tasks = await Task.find({ customerId: req.user.userId }).sort({ postedDate: -1 });
 
     return res.status(200).json({ success: true, data: tasks });
-  } catch (err) {
+  } catch (err: any) {
     return res.status(500).json({ success: false, message: err.message });
   }
 };
@@ -364,9 +369,9 @@ const getMyTasks = async (req, res) => {
  *       500:
  *         description: Server error
  */
-const getFreelancerTasks = async (req, res) => {
+export const getFreelancerTasks = async (req: Request, res: Response) => {
   try {
-    if (req.user.role !== "freelancer") {
+    if (req.user?.role !== UserRole.FREELANCER) {
       return res.status(403).json({ success: false, message: "Access denied: insufficient role" });
     }
 
@@ -375,9 +380,7 @@ const getFreelancerTasks = async (req, res) => {
       .sort({ postedDate: -1 });
 
     return res.status(200).json({ success: true, data: tasks });
-  } catch (err) {
+  } catch (err: any) {
     return res.status(500).json({ success: false, message: err.message });
   }
 };
-
-module.exports = { createTask, getOpenTasks, getTaskById, updateTask, deleteTask, updateTaskStatus, getMyTasks, getFreelancerTasks };

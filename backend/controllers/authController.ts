@@ -1,9 +1,12 @@
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const User = require("../models/User");
+import { Request, Response } from 'express';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import User from '../models/User';
+import { SignupDTO, LoginDTO } from '../types/interfaces';
+import { UserRole } from '../types/enums';
 
-const generateToken = (userId, role) => {
-  return jwt.sign({ userId, role }, process.env.JWT_SECRET, { expiresIn: "7d" });
+const generateToken = (userId: string, role: UserRole): string => {
+  return jwt.sign({ userId, role }, process.env.JWT_SECRET as string, { expiresIn: "7d" });
 };
 
 /**
@@ -55,7 +58,7 @@ const generateToken = (userId, role) => {
  *       500:
  *         description: Server error
  */
-const signup = async (req, res) => {
+export const signup = async (req: Request<{}, {}, SignupDTO>, res: Response) => {
   try {
     const { name, email, password, phone, role, skills } = req.body;
 
@@ -63,7 +66,7 @@ const signup = async (req, res) => {
       return res.status(400).json({ success: false, message: "All fields (name, email, password, phone, role) are required" });
     }
 
-    if (!["customer", "freelancer"].includes(role)) {
+    if (!Object.values(UserRole).includes(role as UserRole)) {
       return res.status(400).json({ success: false, message: "Role must be either 'customer' or 'freelancer'" });
     }
 
@@ -83,9 +86,9 @@ const signup = async (req, res) => {
       skills: skills || null,
     });
 
-    const token = generateToken(user._id, user.role);
+    const token = generateToken(user._id as string, user.role);
     return res.status(201).json({ success: true, token, role: user.role, userId: user._id });
-  } catch (err) {
+  } catch (err: any) {
     return res.status(500).json({ success: false, message: err.message });
   }
 };
@@ -132,7 +135,7 @@ const signup = async (req, res) => {
  *       500:
  *         description: Server error
  */
-const login = async (req, res) => {
+export const login = async (req: Request<{}, {}, LoginDTO>, res: Response) => {
   try {
     const { email, password, role } = req.body;
 
@@ -154,11 +157,9 @@ const login = async (req, res) => {
       return res.status(401).json({ success: false, message: "Invalid credentials or role mismatch" });
     }
 
-    const token = generateToken(user._id, user.role);
+    const token = generateToken(user._id as string, user.role);
     return res.status(200).json({ success: true, token, role: user.role, userId: user._id });
-  } catch (err) {
+  } catch (err: any) {
     return res.status(500).json({ success: false, message: err.message });
   }
 };
-
-module.exports = { signup, login };
