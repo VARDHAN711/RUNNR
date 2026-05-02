@@ -15,12 +15,13 @@ interface TaskCardProps {
 
 // Type guard to resolve taskId whether it's a populated object or a plain string ID
 const resolveTaskId = (taskId: IAcceptRequest['taskId']): string => {
+  if (!taskId) return '';
   if (typeof taskId === 'string') return taskId;
   return taskId._id;
 };
 
 const getBasePrice = (taskId: IAcceptRequest['taskId']): number => {
-  if (typeof taskId === 'string') return 0;
+  if (!taskId || typeof taskId === 'string') return 0;
   return taskId.basePrice;
 };
 

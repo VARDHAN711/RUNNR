@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from 'axios';
-import { ApiResponseSchema, LoginResponseSchema, TaskSchema } from '@/types/schemas';
+import { ApiResponseSchema, LoginResponseSchema, TaskSchema, AcceptRequestSchema, NotificationSchema } from '@/types/schemas';
 import { z } from 'zod';
 
 const axiosInstance: AxiosInstance = axios.create({
@@ -10,7 +10,13 @@ const axiosInstance: AxiosInstance = axios.create({
 const schemaMap: Record<string, z.ZodSchema> = {
   '/auth/login': LoginResponseSchema,
   '/auth/signup': LoginResponseSchema,
+  '/tasks/my-requests': z.array(AcceptRequestSchema),
+  '/tasks/received-requests': z.array(AcceptRequestSchema),
+  '/tasks/freelancer-tasks': z.array(TaskSchema),
+  '/tasks/my-tasks': z.array(TaskSchema),
   '/tasks': z.union([TaskSchema, z.array(TaskSchema)]),
+  '/notifications/unread-count': z.number(),
+  '/notifications': z.union([NotificationSchema, z.array(NotificationSchema)]),
 };
 
 // Request interceptor to attach JWT token

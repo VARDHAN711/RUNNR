@@ -1,5 +1,5 @@
 import { Types } from 'mongoose';
-import { UserRole, TaskStatus, RequestStatus } from './enums';
+import { UserRole, TaskStatus, RequestStatus, NotificationType } from './enums';
 
 export interface IUser {
   _id?: string;
@@ -24,6 +24,7 @@ export interface ITask {
   postedDate?: Date;
   status: TaskStatus;
   assignedFreelancerId?: string | Types.ObjectId | null;
+  isDoneFlagged?: boolean;
 }
 
 export interface IAcceptRequest {
@@ -32,6 +33,16 @@ export interface IAcceptRequest {
   freelancerId: string | Types.ObjectId;
   topUpAmount: number;
   status: RequestStatus;
+  createdAt?: Date;
+}
+
+export interface INotification {
+  _id?: string;
+  recipientId: string | Types.ObjectId;
+  message: string;
+  type: NotificationType;
+  isRead: boolean;
+  taskId?: string | Types.ObjectId;
   createdAt?: Date;
 }
 

@@ -5,7 +5,7 @@ import { UserRole } from '../types';
 
 interface ProtectedRouteProps {
   children: ReactNode;
-  role: UserRole;
+  role?: UserRole;
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, role }) => {

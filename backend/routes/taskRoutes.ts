@@ -9,6 +9,10 @@ import {
   updateTaskStatus,
   getMyTasks,
   getFreelancerTasks,
+  withdrawTask,
+  cancelTask,
+  flagTaskAsDone,
+  confirmTaskCompletion,
 } from '../controllers/taskController';
 import {
   getFreelancerRequests,
@@ -66,6 +70,10 @@ router.get("/:id", authMiddleware, getTaskById);
 router.put("/:id", authMiddleware, updateTask);
 router.delete("/:id", authMiddleware, deleteTask);
 router.patch("/:id/status", authMiddleware, updateTaskStatus);
+router.patch("/:id/withdraw", authMiddleware, withdrawTask);
+router.patch("/:id/cancel", authMiddleware, cancelTask);
+router.patch("/:id/flag-done", authMiddleware, flagTaskAsDone);
+router.patch("/:id/confirm-completion", authMiddleware, confirmTaskCompletion);
 
 // ✅ Nested dynamic router last
 router.use("/:taskId/requests", requestRoutes);

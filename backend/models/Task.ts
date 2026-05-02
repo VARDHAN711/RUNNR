@@ -46,6 +46,10 @@ const taskSchema = new Schema<ITask>({
     ref: "User",
     default: null,
   },
+  isDoneFlagged: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 export default model<ITask>("Task", taskSchema);

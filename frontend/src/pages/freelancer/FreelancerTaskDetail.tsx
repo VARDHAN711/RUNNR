@@ -4,7 +4,7 @@ import axiosInstance from '../../api/axiosInstance';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import ErrorMessage from '../../components/ErrorMessage';
 import StatusBadge from '../../components/StatusBadge';
-import { ArrowLeft, Calendar, MapPin, IndianRupee, Clock, Send, CheckCircle, Info, Loader2, Phone } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, IndianRupee, Clock, Send, CheckCircle, Info, Loader2, Phone, Trash2 } from 'lucide-react';
 import { PopulatedTask, IAcceptRequest, TaskStatus } from '../../types';
 
 const FreelancerTaskDetail: React.FC = () => {
@@ -60,6 +60,43 @@ const FreelancerTaskDetail: React.FC = () => {
       setFeedback({ type: 'success', msg: 'Request sent successfully!' });
     } catch (err: any) {
       setFeedback({ type: 'error', msg: err.response?.data?.message || 'Failed to send request.' });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleWithdraw = async () => {
+    if (!window.confirm('Are you sure you want to withdraw from this task? It will be returned to the open marketplace.')) {
+      return;
+    }
+
+    setSubmitting(true);
+    setFeedback({ type: '', msg: '' });
+    try {
+      const res = await axiosInstance.patch(`/tasks/${id}/withdraw`);
+      setTask(res.data.data);
+      setFeedback({ type: 'success', msg: 'Successfully withdrawn from task.' });
+      setRequestSent(false); // Reset request status as task is now open again
+    } catch (err: any) {
+      setFeedback({ type: 'error', msg: err.response?.data?.message || 'Failed to withdraw from task.' });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleFlagDone = async () => {
+    if (!window.confirm('Are you sure you want to flag this task as completed? The customer will need to confirm your work.')) {
+      return;
+    }
+
+    setSubmitting(true);
+    setFeedback({ type: '', msg: '' });
+    try {
+      const res = await axiosInstance.patch(`/tasks/${id}/flag-done`);
+      setTask(res.data.data);
+      setFeedback({ type: 'success', msg: 'Task flagged as completed. Awaiting customer confirmation.' });
+    } catch (err: any) {
+      setFeedback({ type: 'error', msg: err.response?.data?.message || 'Failed to flag task as done.' });
     } finally {
       setSubmitting(false);
     }
@@ -222,11 +259,49 @@ const FreelancerTaskDetail: React.FC = () => {
                 </form>
               </div>
             )
-          ) : (
+          ) : task.status === TaskStatus.ASSIGNED ? (
             <div className="bg-blue-50 p-6 rounded-2xl border border-blue-200 flex flex-col items-center text-center">
               <Info size={40} className="text-blue-500 mb-3" />
-              <h3 className="text-xl font-bold text-blue-900">Task {task.status === TaskStatus.COMPLETED ? 'Completed' : 'Assigned'}</h3>
-              <p className="text-blue-700 mt-1">This task is already being handled.</p>
+              <h3 className="text-xl font-bold text-blue-900">Task Assigned to You</h3>
+              <p className="text-blue-700 mt-1 mb-6">You are currently working on this task.</p>
+              
+              <button
+                onClick={handleWithdraw}
+                disabled={submitting}
+                className="px-8 py-3 bg-white border border-red-200 text-red-600 rounded-xl font-bold hover:bg-red-50 transition shadow-sm flex items-center gap-2 disabled:opacity-70"
+              >
+                {submitting ? <Loader2 className="animate-spin" size={18} /> : (
+                  <>
+                    <Trash2 size={18} />
+                    <span>Withdraw from Task</span>
+                  </>
+                )}
+              </button>
+
+              <button
+                onClick={handleFlagDone}
+                disabled={submitting}
+                className="w-full mt-4 py-4 bg-green-600 text-white rounded-2xl font-bold shadow-xl shadow-green-100 hover:bg-green-700 transition flex items-center justify-center gap-2 disabled:opacity-70"
+              >
+                {submitting ? <Loader2 className="animate-spin" size={20} /> : (
+                  <>
+                    <CheckCircle size={20} />
+                    <span>Flag as Done</span>
+                  </>
+                )}
+              </button>
+            </div>
+          ) : task.status === TaskStatus.PENDING ? (
+            <div className="bg-purple-50 p-6 rounded-2xl border border-purple-200 flex flex-col items-center text-center">
+              <CheckCircle size={40} className="text-purple-500 mb-3" />
+              <h3 className="text-xl font-bold text-purple-900">Work Submitted</h3>
+              <p className="text-purple-700 mt-1">Awaiting final confirmation from the customer.</p>
+            </div>
+          ) : (
+            <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 flex flex-col items-center text-center">
+              <CheckCircle size={40} className="text-green-500 mb-3" />
+              <h3 className="text-xl font-bold text-gray-900">Task Completed</h3>
+              <p className="text-gray-500 mt-1">This task has been successfully finalized.</p>
             </div>
           )}
         </div>

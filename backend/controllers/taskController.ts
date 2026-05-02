@@ -1,7 +1,9 @@
 import { Request, Response } from 'express';
 import Task from '../models/Task';
+import AcceptRequest from '../models/AcceptRequest';
 import { ITask } from '../types/interfaces';
-import { TaskStatus, UserRole } from '../types/enums';
+import { TaskStatus, UserRole, NotificationType } from '../types/enums';
+import Notification from '../models/Notification';
 
 /**
  * @swagger
@@ -278,8 +280,9 @@ export const deleteTask = async (req: Request, res: Response) => {
     }
 
     await Task.findByIdAndDelete(req.params.id);
+    await AcceptRequest.deleteMany({ taskId: req.params.id });
 
-    return res.status(200).json({ success: true, data: { message: "Task deleted successfully" } });
+    return res.status(200).json({ success: true, data: { message: "Task and associated requests deleted successfully" } });
   } catch (err: any) {
     return res.status(500).json({ success: false, message: err.message });
   }
@@ -331,6 +334,250 @@ export const updateTaskStatus = async (req: Request, res: Response) => {
 
     task.status = TaskStatus.COMPLETED;
     await task.save();
+
+    return res.status(200).json({ success: true, data: task });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+/**
+ * @swagger
+ * /api/tasks/{id}/withdraw:
+ *   patch:
+ *     summary: Withdraw from a task (Freelancer only)
+ *     description: Accessible by the assigned freelancer only. Reverts status to 'open' and clears assignedFreelancerId.
+ *     tags: [Tasks]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Successfully withdrawn from task
+ *       403:
+ *         description: Access denied or task not assigned to requester
+ *       404:
+ *         description: Task not found
+ *       500:
+ *         description: Server error
+ */
+export const withdrawTask = async (req: Request, res: Response) => {
+  try {
+    if (req.user?.role !== UserRole.FREELANCER) {
+      return res.status(403).json({ success: false, message: "Access denied: insufficient role" });
+    }
+
+    const task = await Task.findById(req.params.id);
+    if (!task) {
+      return res.status(404).json({ success: false, message: "Task not found" });
+    }
+
+    if (task.assignedFreelancerId?.toString() !== req.user.userId) {
+      return res.status(403).json({ success: false, message: "Access denied: you are not assigned to this task" });
+    }
+
+    if (task.status !== TaskStatus.ASSIGNED) {
+      return res.status(403).json({ success: false, message: "Only assigned tasks can be withdrawn from" });
+    }
+
+    task.status = TaskStatus.OPEN;
+    task.assignedFreelancerId = null;
+    await task.save();
+
+    await Notification.create({
+      recipientId: task.customerId,
+      message: `The assigned freelancer has withdrawn from your task: "${task.title}". It is now open again.`,
+      type: NotificationType.STATUS_UPDATE,
+      taskId: task._id,
+    });
+
+    return res.status(200).json({ success: true, data: task });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+/**
+ * @swagger
+ * /api/tasks/{id}/cancel:
+ *   patch:
+ *     summary: Cancel a task (Customer only)
+ *     description: Accessible by the task owner (customer) only. Sets status to 'cancelled'.
+ *     tags: [Tasks]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Task cancelled successfully
+ *       403:
+ *         description: Access denied or task not in cancellable state
+ *       404:
+ *         description: Task not found
+ *       500:
+ *         description: Server error
+ */
+export const cancelTask = async (req: Request, res: Response) => {
+  try {
+    if (req.user?.role !== UserRole.CUSTOMER) {
+      return res.status(403).json({ success: false, message: "Access denied: insufficient role" });
+    }
+
+    const task = await Task.findById(req.params.id);
+    if (!task) {
+      return res.status(404).json({ success: false, message: "Task not found" });
+    }
+
+    if (task.customerId.toString() !== req.user.userId) {
+      return res.status(403).json({ success: false, message: "Access denied: you are not the owner of this task" });
+    }
+
+    if (task.status === TaskStatus.COMPLETED || task.status === TaskStatus.CANCELLED) {
+      return res.status(403).json({ success: false, message: `Task cannot be cancelled when status is '${task.status}'` });
+    }
+
+    task.status = TaskStatus.CANCELLED;
+    await task.save();
+
+    if (task.assignedFreelancerId) {
+      await Notification.create({
+        recipientId: task.assignedFreelancerId,
+        message: `The customer has cancelled the task: "${task.title}".`,
+        type: NotificationType.STATUS_UPDATE,
+        taskId: task._id,
+      });
+    }
+
+    return res.status(200).json({ success: true, data: task });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+/**
+ * @swagger
+ * /api/tasks/{id}/flag-done:
+ *   patch:
+ *     summary: Flag task as done (Freelancer only)
+ *     description: Accessible by the assigned freelancer only. Sets isDoneFlagged to true and status to 'pending'.
+ *     tags: [Tasks]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Task flagged as done
+ *       403:
+ *         description: Access denied
+ *       404:
+ *         description: Task not found
+ *       500:
+ *         description: Server error
+ */
+export const flagTaskAsDone = async (req: Request, res: Response) => {
+  try {
+    if (req.user?.role !== UserRole.FREELANCER) {
+      return res.status(403).json({ success: false, message: "Access denied: insufficient role" });
+    }
+
+    const task = await Task.findById(req.params.id);
+    if (!task) {
+      return res.status(404).json({ success: false, message: "Task not found" });
+    }
+
+    if (task.assignedFreelancerId?.toString() !== req.user.userId) {
+      return res.status(403).json({ success: false, message: "Access denied: you are not assigned to this task" });
+    }
+
+    if (task.status !== TaskStatus.ASSIGNED) {
+      return res.status(403).json({ success: false, message: "Only assigned tasks can be flagged as done" });
+    }
+
+    task.isDoneFlagged = true;
+    task.status = TaskStatus.PENDING;
+    await task.save();
+
+    await Notification.create({
+      recipientId: task.customerId,
+      message: `Freelancer has completed the work for task: "${task.title}". Please confirm completion.`,
+      type: NotificationType.STATUS_UPDATE,
+      taskId: task._id,
+    });
+
+    return res.status(200).json({ success: true, data: task });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+/**
+ * @swagger
+ * /api/tasks/{id}/confirm-completion:
+ *   patch:
+ *     summary: Confirm task completion (Customer only)
+ *     description: Accessible by the task owner (customer) only. Sets status to 'completed'.
+ *     tags: [Tasks]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Task completion confirmed
+ *       403:
+ *         description: Access denied
+ *       404:
+ *         description: Task not found
+ *       500:
+ *         description: Server error
+ */
+export const confirmTaskCompletion = async (req: Request, res: Response) => {
+  try {
+    if (req.user?.role !== UserRole.CUSTOMER) {
+      return res.status(403).json({ success: false, message: "Access denied: insufficient role" });
+    }
+
+    const task = await Task.findById(req.params.id);
+    if (!task) {
+      return res.status(404).json({ success: false, message: "Task not found" });
+    }
+
+    if (task.customerId.toString() !== req.user.userId) {
+      return res.status(403).json({ success: false, message: "Access denied: you are not the owner of this task" });
+    }
+
+    if (task.status !== TaskStatus.PENDING) {
+      return res.status(403).json({ success: false, message: "Task completion can only be confirmed when status is 'pending'" });
+    }
+
+    task.status = TaskStatus.COMPLETED;
+    await task.save();
+
+    await Notification.create({
+      recipientId: task.assignedFreelancerId,
+      message: `The customer has confirmed your work and finalized task: "${task.title}".`,
+      type: NotificationType.STATUS_UPDATE,
+      taskId: task._id,
+    });
 
     return res.status(200).json({ success: true, data: task });
   } catch (err: any) {

@@ -8,6 +8,8 @@ import swaggerSpec from './swagger';
 
 import authRoutes from './routes/authRoutes';
 import taskRoutes from './routes/taskRoutes';
+import notificationRoutes from './routes/notificationRoutes';
+import userRoutes from './routes/userRoutes';
 
 const app = express();
 
@@ -44,6 +46,8 @@ app.get("/api/health", (req: Request, res: Response) => {
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/tasks", taskRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/users", userRoutes);
 
 // 404 handler for unmatched routes
 app.use((req: Request, res: Response) => {

@@ -18,6 +18,7 @@ const CustomerTaskDetail: React.FC = () => {
   const [actionLoading, setActionLoading] = useState<boolean>(false);
   const [showCompleteModal, setShowCompleteModal] = useState<boolean>(false);
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+  const [showCancelModal, setShowCancelModal] = useState<boolean>(false);
   const [actionError, setActionError] = useState<string>('');
 
   useEffect(() => {
@@ -38,19 +39,6 @@ const CustomerTaskDetail: React.FC = () => {
     fetchTaskAndRequests();
   }, [id]);
 
-  const handleMarkAsCompleted = async () => {
-    setActionLoading(true);
-    setActionError('');
-    try {
-      const res = await axiosInstance.patch(`/tasks/${id}/status`, { status: TaskStatus.COMPLETED });
-      setTask(res.data.data);
-      setShowCompleteModal(false);
-    } catch (err: any) {
-      setActionError(err.response?.data?.message || 'Failed to update task status.');
-    } finally {
-      setActionLoading(false);
-    }
-  };
 
   const handleDeleteTask = async () => {
     setActionLoading(true);
@@ -60,6 +48,34 @@ const CustomerTaskDetail: React.FC = () => {
       navigate('/customer/dashboard');
     } catch (err: any) {
       setActionError(err.response?.data?.message || 'Failed to delete task.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleCancelTask = async () => {
+    setActionLoading(true);
+    setActionError('');
+    try {
+      const res = await axiosInstance.patch(`/tasks/${id}/cancel`);
+      setTask(res.data.data);
+      setShowCancelModal(false);
+    } catch (err: any) {
+      setActionError(err.response?.data?.message || 'Failed to cancel task.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleConfirmCompletion = async () => {
+    setActionLoading(true);
+    setActionError('');
+    try {
+      const res = await axiosInstance.patch(`/tasks/${id}/confirm-completion`);
+      setTask(res.data.data);
+      setShowCompleteModal(false);
+    } catch (err: any) {
+      setActionError(err.response?.data?.message || 'Failed to confirm task completion.');
     } finally {
       setActionLoading(false);
     }
@@ -186,6 +202,13 @@ const CustomerTaskDetail: React.FC = () => {
                 <span>Delete Task</span>
               </button>
               <button
+                onClick={() => setShowCancelModal(true)}
+                className="flex items-center gap-2 px-6 py-3 bg-white border border-orange-100 text-orange-600 rounded-xl font-bold hover:bg-orange-50 transition shadow-sm"
+              >
+                <Clock size={18} />
+                <span>Cancel Task</span>
+              </button>
+              <button
                 onClick={handleViewRequests}
                 className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary-dark transition shadow-lg shadow-blue-100 ml-auto"
               >
@@ -196,13 +219,41 @@ const CustomerTaskDetail: React.FC = () => {
           )}
 
           {task.status === TaskStatus.ASSIGNED && (
-            <button
-              onClick={() => setShowCompleteModal(true)}
-              className="flex items-center gap-2 px-8 py-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition shadow-lg shadow-green-100 w-full sm:w-auto"
-            >
-              <CheckCircle size={18} />
-              <span>Mark as Completed</span>
-            </button>
+            <>
+              <button
+                disabled
+                className="flex items-center gap-2 px-8 py-3 bg-gray-100 text-gray-400 rounded-xl font-bold cursor-not-allowed border border-gray-200"
+              >
+                <Clock size={18} />
+                <span>Awaiting Freelancer Work</span>
+              </button>
+              <button
+                onClick={() => setShowCancelModal(true)}
+                className="flex items-center gap-2 px-8 py-3 bg-white border border-orange-100 text-orange-600 rounded-xl font-bold hover:bg-orange-50 transition shadow-sm"
+              >
+                <Clock size={18} />
+                <span>Cancel Task</span>
+              </button>
+            </>
+          )}
+
+          {task.status === TaskStatus.PENDING && (
+            <>
+              <button
+                onClick={() => setShowCompleteModal(true)}
+                className="flex items-center gap-2 px-8 py-3 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition shadow-lg shadow-green-100"
+              >
+                <CheckCircle size={18} />
+                <span>Confirm Completion</span>
+              </button>
+              <button
+                onClick={() => setShowCancelModal(true)}
+                className="flex items-center gap-2 px-8 py-3 bg-white border border-orange-100 text-orange-600 rounded-xl font-bold hover:bg-orange-50 transition shadow-sm"
+              >
+                <Clock size={18} />
+                <span>Cancel Task</span>
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -215,10 +266,10 @@ const CustomerTaskDetail: React.FC = () => {
 
       <ConfirmModal
         isOpen={showCompleteModal}
-        title="Mark Task as Completed"
-        message="Are you sure you want to mark this task as completed? This action will finalize the task."
-        confirmText="Mark as Completed"
-        onConfirm={handleMarkAsCompleted}
+        title="Confirm Task Completion"
+        message="Are you sure you want to confirm that this task is completed? This will finalize the task and mark it as finished."
+        confirmText="Confirm Completion"
+        onConfirm={handleConfirmCompletion}
         onCancel={() => setShowCompleteModal(false)}
         confirmLoading={actionLoading}
       />
@@ -230,6 +281,16 @@ const CustomerTaskDetail: React.FC = () => {
         confirmText="Delete"
         onConfirm={handleDeleteTask}
         onCancel={() => setShowDeleteModal(false)}
+        confirmLoading={actionLoading}
+      />
+
+      <ConfirmModal
+        isOpen={showCancelModal}
+        title="Cancel Task"
+        message="Are you sure you want to cancel this task? This will notify any assigned freelancer and stop all work."
+        confirmText="Cancel Task"
+        onConfirm={handleCancelTask}
+        onCancel={() => setShowCancelModal(false)}
         confirmLoading={actionLoading}
       />
     </div>

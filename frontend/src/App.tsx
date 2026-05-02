@@ -23,6 +23,9 @@ import FreelancerDashboard from '@/pages/freelancer/FreelancerDashboard';
 import FreelancerTaskDetail from '@/pages/freelancer/FreelancerTaskDetail';
 import MyTasksPage from '@/pages/freelancer/MyTasksPage';
 
+import NotificationsPage from '@/pages/NotificationsPage';
+import ProfilePage from '@/pages/ProfilePage';
+
 import { UserRole } from '@/types';
 
 const App: React.FC = () => {
@@ -95,6 +98,24 @@ const App: React.FC = () => {
               element={
                 <ProtectedRoute role={UserRole.FREELANCER}>
                   <MyTasksPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Shared Protected Routes */}
+            <Route
+              path="/notifications"
+              element={
+                <ProtectedRoute>
+                  <NotificationsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <ProfilePage />
                 </ProtectedRoute>
               }
             />

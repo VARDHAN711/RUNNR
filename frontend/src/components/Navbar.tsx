@@ -1,11 +1,35 @@
-import React from 'react';
-import { LogOut, PlusCircle, Briefcase } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { LogOut, PlusCircle, Briefcase, Bell, User } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
+import axiosInstance from '@/api/axiosInstance';
 
 const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (user.token) {
+      fetchUnreadCount();
+      
+      const handleNotificationRead = () => fetchUnreadCount();
+      window.addEventListener('notification-read', handleNotificationRead);
+      
+      return () => {
+        window.removeEventListener('notification-read', handleNotificationRead);
+      };
+    }
+  }, [user.token]);
+
+  const fetchUnreadCount = async () => {
+    try {
+      const res = await axiosInstance.get('/notifications/unread-count');
+      setUnreadCount(res.data.data);
+    } catch (err) {
+      console.error("Failed to fetch unread notifications count", err);
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -41,6 +65,27 @@ const Navbar: React.FC = () => {
                 <span>My Tasks</span>
               </Link>
             )}
+
+            <Link 
+              to="/notifications" 
+              className="relative p-2 text-gray-500 hover:text-primary transition rounded-full hover:bg-gray-50 flex items-center"
+              title="Notifications"
+            >
+              <Bell size={20} />
+              {unreadCount > 0 && (
+                <span className="absolute top-1.5 right-1.5 bg-red-500 text-white text-[10px] font-bold h-4 min-w-4 px-1 rounded-full flex items-center justify-center border-2 border-white">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
+            </Link>
+
+            <Link 
+              to="/profile" 
+              className="p-2 text-gray-500 hover:text-primary transition rounded-full hover:bg-gray-50 flex items-center"
+              title="Profile"
+            >
+              <User size={20} />
+            </Link>
 
             <button
               onClick={handleLogout}

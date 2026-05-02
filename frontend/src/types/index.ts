@@ -7,12 +7,19 @@ export enum TaskStatus {
   OPEN = 'open',
   ASSIGNED = 'assigned',
   COMPLETED = 'completed',
+  CANCELLED = 'cancelled',
+  PENDING = 'pending',
 }
 
 export enum RequestStatus {
   PENDING = 'pending',
   ACCEPTED = 'accepted',
   REJECTED = 'rejected',
+}
+
+export enum NotificationType {
+  STATUS_UPDATE = 'status_update',
+  SYSTEM = 'system',
 }
 
 export interface IUser {
@@ -37,6 +44,7 @@ export interface ITask {
   postedDate?: string;
   status: TaskStatus;
   assignedFreelancerId?: string | null;
+  isDoneFlagged?: boolean;
 }
 
 export interface IAcceptRequest {
@@ -45,6 +53,16 @@ export interface IAcceptRequest {
   freelancerId: string;
   topUpAmount: number;
   status: RequestStatus;
+  createdAt?: string;
+}
+
+export interface INotification {
+  _id: string;
+  recipientId: string;
+  message: string;
+  type: NotificationType;
+  isRead: boolean;
+  taskId?: string;
   createdAt?: string;
 }
 
@@ -70,6 +88,7 @@ export interface PopulatedAcceptRequest extends Omit<IAcceptRequest, 'freelancer
  * Enriched Task returned by the freelancer task-detail endpoint.
  * customerId is populated with basic user info by the backend.
  */
-export interface PopulatedTask extends Omit<ITask, 'customerId'> {
+export interface PopulatedTask extends Omit<ITask, 'customerId' | 'assignedFreelancerId'> {
   customerId: Pick<IUser, '_id' | 'name' | 'phone'>;
+  assignedFreelancerId?: Pick<IUser, '_id' | 'name' | 'phone'> | null;
 }
