@@ -3,7 +3,7 @@ import { ApiResponseSchema, LoginResponseSchema, TaskSchema, AcceptRequestSchema
 import { z } from 'zod';
 
 const axiosInstance: AxiosInstance = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  baseURL: '/api',
 });
 
 // Mapping of partial URLs to their corresponding data schemas
