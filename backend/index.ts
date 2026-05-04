@@ -29,26 +29,35 @@ app.use("/api/tasks", taskRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/users", userRoutes);
 
-// 3. FRONTEND SERVING (Must be AFTER API routes but BEFORE 404)
-// This serves the compiled React files from the dist folder
-app.use(express.static(path.join(__dirname, '../../frontend/dist')));
+// 3. FRONTEND SERVING
+// On Render, __dirname in a compiled file might point to backend/dist
+// We ensure we point correctly to the frontend/dist folder
+const frontendPath = path.join(__dirname, '../../frontend/dist');
+app.use(express.static(frontendPath));
 
 // 4. CATCH-ALL ROUTE
-// If a request doesn't match an API route or a static file, send index.html
+// This must be the VERY LAST route
 app.get('*', (req: Request, res: Response) => {
-  res.sendFile(path.join(__dirname, '../../frontend/dist', 'index.html'));
+  res.sendFile(path.join(frontendPath, 'index.html'));
 });
 
 // 5. MongoDB connection + server start
-const PORT = process.env.PORT || 5000;
+// Render provides the PORT environment variable as a string; we cast to Number
+const PORT = Number(process.env.PORT) || 10000;
 
 mongoose
   .connect(process.env.MONGO_URI as string)
   .then(() => {
     console.log("✅ Connected to MongoDB");
-    // Listen on 0.0.0.0 for Render compatibility
-    app.listen(PORT, () => {
+
+    /**
+     * CRITICAL FOR RENDER:
+     * We bind to '0.0.0.0' so the service is reachable externally.
+     * Without this, the health check may fail and cause a "Timed Out" error.
+     */
+    app.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 Runnr API running on port ${PORT}`);
+      console.log(`📡 Binding to 0.0.0.0 for external access`);
     });
   })
   .catch((err: any) => {
